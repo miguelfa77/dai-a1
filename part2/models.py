@@ -1,0 +1,113 @@
+from google import genai
+import pandas as pd
+import random
+import os
+
+
+class Master:
+    def __init__(self):
+
+        self.DF_PATH = "part2/Q&A_db_practice.json"
+        # load df
+        self.df = self.load_df(self.DF_PATH)
+        
+        self.Evaluator = EvaluatorModel()
+        self.current_index = None
+
+    def load_df(self, df_path):
+        return pd.read_json(df_path)
+
+    def choose_question(self):
+        """Randomly select a question row from the DataFrame."""
+
+        self.current_index = random.randint(0, len(self.df) - 1)
+        return self.df.loc[self.current_index, "question"]
+
+    def get_reference(self):
+        if self.current_index is None:
+            raise ValueError("No question selected.")
+        return self.df.loc[self.current_index, "answer"]
+
+    def evaluate_answer(self, student_answer):
+        """Delegate evaluation to the EvaluatorLLM."""
+
+        if self.current_index is None:
+            raise ValueError("No question selected.")
+
+        question = self.df.loc[self.current_index, "question"]
+        ref_answer = self.df.loc[self.current_index, "answer"]
+
+        return self.Evaluator.evaluate(question, ref_answer, student_answer)
+
+
+
+class EvaluatorModel:
+    """ Model for evaluating user answers """
+
+    def __init__(self):
+        self.LLM = 'gemini-2.5-flash-lite'
+        self.API_KEY = os.getenv("GEMINI_API_KEY")
+
+        # load API client
+        self.client = self.get_client()
+
+    def get_client(self):
+        """ Initializes GenAI client """
+        try:
+            client = genai.Client(api_key=self.API_KEY)
+            return client
+        except Exception as e:
+            print("Error initializing client:", e)
+            return None
+
+
+    def get_prompt(self, question, ref_answer, answer):
+        """ Forms prompt to input into evaluation model """
+        
+        prompt = f"""
+        You are an expert ML examiner.
+
+        Question: {question}
+        Reference answer: {ref_answer}
+        Student answer: {answer}
+
+        Evaluate the student's answer for correctness, completeness, and precision.
+        Explain briefly what is missing or incorrect.
+        Then provide a numeric score from 0 to 100 (using the Reference answer as a reference) in the format:
+        Score: <number>
+        Feedback: <short explanation>
+        """
+        return prompt
+    
+    def evaluate(self, question, ref_answer, answer):
+        """Calls the GenAI model and returns the raw text response."""
+        
+        prompt = self.get_prompt(question, ref_answer, answer)
+
+        if prompt != None:
+            # Call the GenAI model
+            response = self.client.models.generate_content(
+            model=self.LLM,
+            contents=prompt
+            )
+            return response.text
+        else:
+            print("Error: Either question, ref_answer or answer not defined")
+    
+
+
+"""
+# Create the objects
+master = Master()
+
+# Get a question
+q = master.choose_question()
+
+# Student responds
+student_ans = input(f"{q}: ")
+
+# Evaluate
+result = master.evaluate_answer(student_ans)
+print(result)
+
+"""
