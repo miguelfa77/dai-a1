@@ -3,6 +3,9 @@ import pandas as pd
 import random
 import os
 
+import dotenv
+dotenv.load_dotenv()
+
 
 class Master:
     def __init__(self):
@@ -46,7 +49,7 @@ class EvaluatorModel:
 
     def __init__(self):
         self.LLM = 'gemini-2.5-flash-lite'
-        self.API_KEY = os.getenv("GEMINI_API_KEY")
+        self.API_KEY = os.environ.get("GEMINI_API_KEY")
 
         # load API client
         self.client = self.get_client()
@@ -71,10 +74,13 @@ class EvaluatorModel:
         Reference answer: {ref_answer}
         Student answer: {answer}
 
+        First step is figure out if 'Student answer' is an attempt at responding the 'Question'.
+        - If it is not: Then respond like in a normal conversation.
+        - If it is: Then do the following.
         Evaluate the student's answer for correctness, completeness, and precision.
         Explain briefly what is missing or incorrect.
         Then provide a numeric score from 0 to 100 (using the Reference answer as a reference) in the format:
-        Score: <number>
+        Score: <number> n\
         Feedback: <short explanation>
         """
         return prompt
@@ -85,7 +91,6 @@ class EvaluatorModel:
         prompt = self.get_prompt(question, ref_answer, answer)
 
         if prompt != None:
-            # Call the GenAI model
             response = self.client.models.generate_content(
             model=self.LLM,
             contents=prompt
@@ -93,21 +98,4 @@ class EvaluatorModel:
             return response.text
         else:
             print("Error: Either question, ref_answer or answer not defined")
-    
 
-
-"""
-# Create the objects
-master = Master()
-
-# Get a question
-q = master.choose_question()
-
-# Student responds
-student_ans = input(f"{q}: ")
-
-# Evaluate
-result = master.evaluate_answer(student_ans)
-print(result)
-
-"""
