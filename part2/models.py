@@ -1,6 +1,7 @@
 from google import genai
 import pandas as pd
 import random
+import streamlit as st
 import os
 
 import dotenv
@@ -49,7 +50,7 @@ class EvaluatorModel:
 
     def __init__(self):
         self.LLM = 'gemini-2.5-flash-lite'
-        self.API_KEY = os.environ.get("GEMINI_API_KEY")
+        self.API_KEY = st.secrets['GEMINI_API_KEY']
 
         # load API client
         self.client = self.get_client()
@@ -80,7 +81,7 @@ class EvaluatorModel:
         Evaluate the student's answer for correctness, completeness, and precision.
         Explain briefly what is missing or incorrect.
         Then provide a numeric score from 0 to 100 (using the Reference answer as a reference) in the format:
-        Score: <number> n\
+        Score: <number>\n
         Feedback: <short explanation>
         """
         return prompt

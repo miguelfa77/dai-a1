@@ -26,7 +26,7 @@ st.markdown("""
     text-align: center;
 }
 .chat-wrapper {
-    margin-top: 120px; /* space for fixed header */
+    margin-top: 100px; /* space for fixed header */
 }
 .chat-box {
     height: 500px;
@@ -133,9 +133,7 @@ def render_chat():
 
 
 
-
-
-
+# Show history
 def render_history():
     """Render a simple history page with download option."""
     st.header("Chat History")
@@ -150,7 +148,7 @@ def render_history():
         t = ts if ts else "-"
         role = msg.get("role", "assistant")
         content = msg.get("content", "")
-        st.markdown(f"**{role.title()}** — _{t}_  \:{content}")
+        st.markdown(f"**{role.title()}** — _{t}_  \: {content}")
         st.markdown("---")
 
     # Let download as Json
