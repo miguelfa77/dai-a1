@@ -108,8 +108,9 @@ class EvaluatorModel:
             predictions=[answer],
             references=[ref_answer]
         )
-        score = (results['rougeL'] * 100)
+        score = results['rougeL'] * 100
         score = round(score, 2)
+        
         return score
     
     def evaluate(self, question, ref_answer, answer):
