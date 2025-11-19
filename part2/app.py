@@ -112,7 +112,7 @@ def render_chat():
         answer = st.session_state.just_got_user
         del st.session_state["just_got_user"]
 
-        reply = MasterModel.evaluate_answer(answer)
+        reply = MasterModel.evaluate_answer(answer, st.session_state.messages)
         st.session_state.messages.append({
             "role": "assistant",
             "content": reply,

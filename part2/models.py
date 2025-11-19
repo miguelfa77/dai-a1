@@ -31,7 +31,7 @@ class Master:
             raise ValueError("No question selected.")
         return self.df.loc[self.current_index, "answer"]
 
-    def evaluate_answer(self, student_answer):
+    def evaluate_answer(self, student_answer, history):
         """Delegate evaluation to the EvaluatorLLM."""
 
         if self.current_index is None:
@@ -40,7 +40,7 @@ class Master:
         question = self.df.loc[self.current_index, "question"]
         ref_answer = self.df.loc[self.current_index, "answer"]
 
-        return self.Evaluator.evaluate(question, ref_answer, student_answer)
+        return self.Evaluator.evaluate(question, ref_answer, student_answer, history)
 
 
 
@@ -64,31 +64,36 @@ class EvaluatorModel:
             return None
 
 
-    def get_prompt(self, question, ref_answer, answer):
+    def get_prompt(self, question, ref_answer, answer, history=None):
         """ Forms prompt to input into evaluation model """
         
         prompt = f"""
-        You are an expert ML examiner.
 
         Question: {question}
         Reference answer: {ref_answer}
         Student answer: {answer}
 
         First step is figure out if 'Student answer' is an attempt at responding the 'Question'.
-        - If it is not: Then respond like in a normal conversation.
-        - If it is: Then do the following.
-        Evaluate the student's answer for correctness, completeness, and precision.
-        Explain briefly what is missing or incorrect.
-        Then provide a numeric score from 0 to 100 (using the Reference answer as a reference) in the format:
-        Score: <number> n\
-        Feedback: <short explanation>
+        - If it is not: Then you are a normal conversational assistant, and should attempt to keep the conversation going.
+        - If it is: Then you are an ML Examiner and should respond the following way:
+            Evaluate the student's answer for correctness, completeness, and precision.
+            Explain briefly what is missing or incorrect.
+            Then provide a numeric score from 0 to 100 (using the Reference answer as a reference) in the format:
+            Score: <number> n\
+            Feedback: <short explanation>
         """
+        if history != None:
+            for msg in history:
+                prompt += f"{msg['role']}: {msg['content']}\n"
+
+                prompt += f"\nUser just said: {answer}\n"
+                prompt += "Respond appropriately."
         return prompt
     
-    def evaluate(self, question, ref_answer, answer):
+    def evaluate(self, question, ref_answer, answer, history):
         """Calls the GenAI model and returns the raw text response."""
         
-        prompt = self.get_prompt(question, ref_answer, answer)
+        prompt = self.get_prompt(question, ref_answer, answer, history)
 
         if prompt != None:
             response = self.client.models.generate_content(
