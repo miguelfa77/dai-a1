@@ -116,7 +116,7 @@ class EvaluatorModel:
         
         prompt = self.get_prompt(question, ref_answer, answer)
 
-        if prompt != None:
+        if prompt not None:
             response = self.client.models.generate_content(
             model=self.LLM,
             contents=prompt
@@ -172,7 +172,7 @@ class ConversationalModel:
         
         prompt = self.get_prompt(answer, history)
 
-        if prompt != None:
+        if prompt not None:
             response = self.client.models.generate_content(
             model=self.LLM,
             contents=prompt
