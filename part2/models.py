@@ -2,6 +2,7 @@ from google import genai
 import pandas as pd
 import random
 import os
+import evaluate
 
 import dotenv
 dotenv.load_dotenv()
@@ -9,6 +10,7 @@ dotenv.load_dotenv()
 
 class Master:
     def __init__(self):
+        """ Contains info and orchestrates Evaluator and Conversational models"""
 
         self.DF_PATH = "part2/Q&A_db_practice.json"
         # load df
@@ -38,7 +40,7 @@ class Master:
         return self.Conversational.answer(answer, history)
         
     def evaluate_answer(self, answer):
-        """Delegate evaluation to the EvaluatorLLM."""
+        """Delegate evaluation to the EvaluatorLLM and ROUGE."""
 
         if self.current_index is None:
             raise ValueError("No question selected.")
@@ -46,7 +48,10 @@ class Master:
         question = self.df.loc[self.current_index, "question"]
         ref_answer = self.df.loc[self.current_index, "answer"]
 
-        return self.Evaluator.evaluate(question, ref_answer, answer)
+        evaluation = self.Evaluator.evaluate(question, ref_answer, answer)
+        rouge_score = self.Evaluator.get_rouge(ref_answer, answer)
+
+        return str(f'{evaluation} \nRouge-L Score: {rouge_score}')
 
 
 
@@ -94,6 +99,16 @@ class EvaluatorModel:
                 Then follow the rules above.
             """
         return prompt
+
+    def get_rouge(self, ref_answer, answer):
+        rouge = evaluate.load("rouge")
+
+        results = rouge.compute(
+            predictions=[answer],
+            references=[ref_answer]
+        )
+        score = round(results['rougeL'] * 100), 2
+        return score
     
     def evaluate(self, question, ref_answer, answer):
         """Calls the GenAI model and returns the raw text response."""

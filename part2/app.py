@@ -125,7 +125,7 @@ def render_chat():
 
     user_msg = st.chat_input("Type your message...")
 
-    # Fixed exam-mode button
+    # Static exam mode button
     st.markdown('<div class="exam-button-container">', unsafe_allow_html=True)
     button_label = "Exam mode: ON" if st.session_state.exam_mode else "Exam mode: OFF"
     button_clicked = st.button(button_label, key="exam_toggle")

@@ -44,17 +44,14 @@ Part 2 delivers an ML tutoring experience that blends a friendly assistant with 
 - **History & downloads**  
   - All interactions (including evaluation prompts and user feedback) are persisted in `st.session_state` and can be exported as JSON from the History view.
 
-### Models & Architecture
+### Evaluation & Architecture
 - `Master` orchestrates question selection, answer evaluation, and conversational fallbacks.  
-- `EvaluatorModel` calls **Gemini 2.5 Flash Lite** through `google-genai` to compare student answers with reference answers from `Q&A_db_practice.json`, outputting a score plus structured comments.  
+- Main Evaluator: `EvaluatorModel` calls **Gemini 2.5 Flash Lite** through `google-genai` to compare student answers with reference answers from `Q&A_db_practice.json`, outputting a score plus structured comments. This model is not small and is able to score/evaluate with depth.
 - `ConversationalModel` uses the same Gemini endpoint but with a lightweight prompt optimized for free-form tutoring conversations.  
 - State management relies on Streamlit session keys (`messages`, `exam_mode`, `awaiting_answer`, `awaiting_feedback`) to guarantee the deterministic four-step loop and to keep UI artifacts (buttons, reruns) synchronized.
+- Alternative Evaluator: Used Rouge-L as it rewards correct ordering, conceptual similarity and structure. Thereby making it the best metric for evaluating correctness in short ML answers. Its important to keep in mind that ROUGE works well as a secondary metric, but has many limitations. It measures textual overlap, not meaning. This is why we chose to use the `EvaluatorModel` as the primary evaluator.
 
-### Design Decisions
-- **Two-model split** isolates deterministic grading prompts from open-ended dialogue so each prompt can be highly specialized and cheaper to maintain.  
-- **Explicit feedback loop** encourages meta-cognition and also provides labeled data points should we later fine-tune or evaluate the grader.  
-- **Fixed UI controls** prevent scrolling out of critical actions during long study sessions, reducing user error.  
-- **State-driven reruns** leverage `st.session_state` plus `st.rerun()` so multi-step exam flows feel instant without relying on sleep/polling logic.
+
 
 ### Files
 - `part2/app.py`: Streamlit UI, state machine, and sidebar navigation.
