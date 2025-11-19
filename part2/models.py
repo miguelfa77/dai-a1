@@ -60,7 +60,8 @@ class EvaluatorModel:
 
     def __init__(self):
         self.LLM = 'gemini-2.5-flash-lite'
-        self.API_KEY = os.environ.get("GEMINI_API_KEY")
+#           self.API_KEY = os.environ.get("GEMINI_API_KEY")
+        self.API_KEY = 'AIzaSyAwv_c6f_sUoLRIKoS0MtrzMyK2M4VYff4'
 
         # load API client
         self.client = self.get_client()
