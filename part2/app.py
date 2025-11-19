@@ -173,7 +173,7 @@ def render_chat():
                 reply = MasterModel.evaluate_answer(user_msg)
                 st.session_state.messages.append({
                     "role": "assistant",
-                    "content": f'{reply["llm_evaluation"]}/n Rouge Score: {reply["rouge_score"]}',
+                    "content": reply,
                     "time": datetime.utcnow().isoformat(),
                 })
                 st.session_state.messages.append({
