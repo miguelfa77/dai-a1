@@ -11,4 +11,5 @@ beautifulsoup4>=4.12.0
 # Part 2 (Streamlit chatbot & Gemini integration)
 streamlit>=1.36.0
 google-genai>=0.5.2
+evaluate>=0.4.0
 
