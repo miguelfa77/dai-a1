@@ -28,29 +28,39 @@ Part 1 focuses on extracting structured information from unstructured text and b
 - `ner_predictions_v2.parquet`: Extracted entity predictions
 - `knowledge_graph.png`: Visualization of the knowledge graph
 
-## Part 2: ML Knowledge Evaluator Chatbot
+## Part 2: ML Knowledge Evaluator & Study Chatbot
 
-Part 2 is an interactive chatbot application built with **Streamlit** that evaluates student answers to machine learning questions.
+Part 2 delivers an ML tutoring experience that blends a friendly assistant with an exam-style evaluator powered by Google's Gemini family models.
 
-### Overview
-A Streamlit-based web application that:
-- Presents ML-related questions to students
-- Evaluates student answers using Google's Gemini AI model
-- Provides feedback and scores (0-100) based on reference answers
-- Maintains chat history with conversation tracking
+### Functionalities
+- **Dual interaction modes**  
+  - *Chat mode*: behaves like a normal assistant using a conversational Gemini instance (`ConversationalModel`).  
+  - *Exam mode*: cycles through a four-step loop (question → student answer → LLM evaluation → student feedback) and logs every turn in chat history.
+- **Exam-mode UX refinements**  
+  - Fixed chat input and side-by-side toggle button so controls remain visible while scrolling.  
+  - Toggle can activate/deactivate exams on the fly, resetting the queue and ensuring clean state transitions.
+- **Feedback capture**  
+  - After each grading response, the user is prompted to critique the feedback; those entries are labeled `(Feedback)` in history to enable later review or fine-tuning.
+- **History & downloads**  
+  - All interactions (including evaluation prompts and user feedback) are persisted in `st.session_state` and can be exported as JSON from the History view.
 
-### Key Features
-- **Interactive Chat Interface**: Clean, user-friendly chatbot UI
-- **AI-Powered Evaluation**: Uses Gemini 2.5 Flash Lite to evaluate answers
-- **Question Bank**: Randomly selects questions from a Q&A database
-- **Feedback System**: Provides detailed feedback on correctness, completeness, and precision
-- **History Tracking**: View and download chat history as JSON
+### Models & Architecture
+- `Master` orchestrates question selection, answer evaluation, and conversational fallbacks.  
+- `EvaluatorModel` calls **Gemini 2.5 Flash Lite** through `google-genai` to compare student answers with reference answers from `Q&A_db_practice.json`, outputting a score plus structured comments.  
+- `ConversationalModel` uses the same Gemini endpoint but with a lightweight prompt optimized for free-form tutoring conversations.  
+- State management relies on Streamlit session keys (`messages`, `exam_mode`, `awaiting_answer`, `awaiting_feedback`) to guarantee the deterministic four-step loop and to keep UI artifacts (buttons, reruns) synchronized.
+
+### Design Decisions
+- **Two-model split** isolates deterministic grading prompts from open-ended dialogue so each prompt can be highly specialized and cheaper to maintain.  
+- **Explicit feedback loop** encourages meta-cognition and also provides labeled data points should we later fine-tune or evaluate the grader.  
+- **Fixed UI controls** prevent scrolling out of critical actions during long study sessions, reducing user error.  
+- **State-driven reruns** leverage `st.session_state` plus `st.rerun()` so multi-step exam flows feel instant without relying on sleep/polling logic.
 
 ### Files
-- `app.py`: Main Streamlit application
-- `models.py`: Contains `Master` and `EvaluatorModel` classes for question selection and answer evaluation
-- `Q&A_db_practice.json`: Database of questions and reference answers
-- `model_test.ipynb`: Testing notebook for the evaluation models
+- `part2/app.py`: Streamlit UI, state machine, and sidebar navigation.
+- `part2/models.py`: `Master`, `EvaluatorModel`, and `ConversationalModel` implementations plus Gemini client wiring.
+- `part2/Q&A_db_practice.json`: Question bank with reference answers used by exam mode.
+- `part2/model_test.ipynb`: Notebook for iterating on prompt templates and sanity-checking API responses.
 
 ### Setup
 1. Install required dependencies:

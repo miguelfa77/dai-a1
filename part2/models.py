@@ -15,6 +15,7 @@ class Master:
         self.df = self.load_df(self.DF_PATH)
         
         self.Evaluator = EvaluatorModel()
+        self.Conversational = ConversationalModel()
         self.current_index = None
 
     def load_df(self, df_path):
@@ -31,7 +32,12 @@ class Master:
             raise ValueError("No question selected.")
         return self.df.loc[self.current_index, "answer"]
 
-    def evaluate_answer(self, student_answer, history):
+    def normal_answer(self, answer, history=None):
+        """ Delegate answer to ConversationLLM """
+
+        return self.Conversational.answer(answer, history)
+        
+    def evaluate_answer(self, answer):
         """Delegate evaluation to the EvaluatorLLM."""
 
         if self.current_index is None:
@@ -40,7 +46,7 @@ class Master:
         question = self.df.loc[self.current_index, "question"]
         ref_answer = self.df.loc[self.current_index, "answer"]
 
-        return self.Evaluator.evaluate(question, ref_answer, student_answer, history)
+        return self.Evaluator.evaluate(question, ref_answer, answer)
 
 
 
@@ -64,36 +70,90 @@ class EvaluatorModel:
             return None
 
 
-    def get_prompt(self, question, ref_answer, answer, history=None):
+    def get_prompt(self, question, ref_answer, answer):
         """ Forms prompt to input into evaluation model """
-        
+
+        # Rules
         prompt = f"""
+                You are an ML Examiner.
+                RULES:
+                → Give structured evaluation of the student's answer for correctness, completeness, and precision (using the reference answer)
+                → Explain what is missing or incorrect.
+                → Give a score from 0 to 100 using this exact format:
 
-        Question: {question}
-        Reference answer: {ref_answer}
-        Student answer: {answer}
+                    Score: <number>
+                    
+                    Feedback: <Structured Explanation>
+                
+                Current evaluation context:
+                Question: {question}
+                Reference answer: {ref_answer}
+                Student message: {answer}
 
-        First step is figure out if 'Student answer' is an attempt at responding the 'Question'.
-        - If it is not: Then you are a normal conversational assistant, and should attempt to keep the conversation going.
-        - If it is: Then you are an ML Examiner and should respond the following way:
-            Evaluate the student's answer for correctness, completeness, and precision.
-            Explain briefly what is missing or incorrect.
-            Then provide a numeric score from 0 to 100 (using the Reference answer as a reference) in the format:
-            Score: <number> n\
-            Feedback: <short explanation>
-        """
-        if history != None:
-            for msg in history:
-                prompt += f"{msg['role']}: {msg['content']}\n"
-
-                prompt += f"\nUser just said: {answer}\n"
-                prompt += "Respond appropriately."
+                Determine whether 'Student message' is answering the question.
+                Then follow the rules above.
+            """
         return prompt
     
-    def evaluate(self, question, ref_answer, answer, history):
+    def evaluate(self, question, ref_answer, answer):
         """Calls the GenAI model and returns the raw text response."""
         
-        prompt = self.get_prompt(question, ref_answer, answer, history)
+        prompt = self.get_prompt(question, ref_answer, answer)
+
+        if prompt != None:
+            response = self.client.models.generate_content(
+            model=self.LLM,
+            contents=prompt
+            )
+            return response.text
+        else:
+            print("Error: Either question, ref_answer or answer not defined")
+
+
+class ConversationalModel:
+    """ Responds like a conversational assistant """
+
+    def __init__(self):
+        self.LLM = 'gemini-2.5-flash-lite'
+        self.API_KEY = os.environ.get("GEMINI_API_KEY")
+
+        # load API client
+        self.client = self.get_client()
+
+    def get_client(self):
+        """ Initializes GenAI client """
+        try:
+            client = genai.Client(api_key=self.API_KEY)
+            return client
+        except Exception as e:
+            print("Error initializing client:", e)
+            return None
+
+    def get_prompt(self, answer, history=None):
+        """ Forms prompt to input into evaluation model """
+
+        # Rules
+        prompt = f"""
+            You are a conversational assistant.
+            RULES:
+            → You behave as a normal, helpful conversational assistant.
+            → Stay friendly, coherent, and keep the conversation going.
+            → Keep the conversation history as context.
+            """
+
+        # Add history
+        if history:
+            prompt += "\nConversation history:\n"
+            for msg in history:
+                role = "User" if msg["role"] == "user" else "Assistant"
+                prompt += f"{role}: {msg['content']}\n"
+
+        return prompt
+
+    def answer(self, answer, history):
+        """Calls the GenAI model and returns the raw text response."""
+        
+        prompt = self.get_prompt(answer, history)
 
         if prompt != None:
             response = self.client.models.generate_content(

@@ -12,6 +12,11 @@ MasterModel = load_master()
 
 st.markdown("""
 <style>
+:root {
+    --chat-width: min(720px, 90vw);
+    --chat-offset: calc((100vw - var(--chat-width))/2);
+    --button-gap: 160px;
+}
 .fixed-header {
     position: fixed;
     top: 20px; /* push header down from top */
@@ -33,16 +38,34 @@ st.markdown("""
     overflow-y: auto;
     padding-right: 10px;
 }
+.exam-button-container {
+    position: fixed;
+    bottom: 28px;
+    right: calc(var(--chat-offset) + 12px);
+    z-index: 10000;
+}
+div[data-testid="stChatInput"] {
+    width: var(--chat-width);
+    margin-left: auto;
+    margin-right: auto;
+    padding-right: var(--button-gap);
+}
+@media (max-width: 900px) {
+    :root {
+        --button-gap: 110px;
+    }
+}
+@media (min-width: 901px) {
+    :root {
+        --button-gap: 190px;
+    }
+}
 </style>
 """, unsafe_allow_html=True)
 
 
 
 st.set_page_config(page_title="DAI Chatbot", page_icon="💬", layout="centered")
-
-# Initialize chat history
-if "messages" not in st.session_state:
-    st.session_state.messages = []
 
 with st.sidebar:
     st.header("Navigation")
@@ -61,10 +84,27 @@ def render_chat():
     # Set state
     if "messages" not in st.session_state:
         st.session_state.messages = []
+    if "exam_mode" not in st.session_state:
+        st.session_state.exam_mode = False
     if "awaiting_answer" not in st.session_state:
         st.session_state.awaiting_answer = False
-    if "started" not in st.session_state:
-        st.session_state.started = False
+    if "awaiting_feedback" not in st.session_state:
+        st.session_state.awaiting_feedback = False
+
+    # Queue new exam mode question when needed
+    if (
+        st.session_state.exam_mode
+        and not st.session_state.awaiting_answer
+        and not st.session_state.awaiting_feedback
+    ):
+        question = MasterModel.choose_question()
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": question,
+            "time": datetime.utcnow().isoformat(),
+        })
+        st.session_state.awaiting_answer = True
+        st.rerun()
 
     # Set header
     st.markdown("""
@@ -83,56 +123,77 @@ def render_chat():
             st.markdown(msg["content"])
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Ask question
-    if not st.session_state.started:
-        q = MasterModel.choose_question()
+    user_msg = st.chat_input("Type your message...")
+
+    # Fixed exam-mode button
+    st.markdown('<div class="exam-button-container">', unsafe_allow_html=True)
+    button_label = "Exam mode: ON" if st.session_state.exam_mode else "Exam mode: OFF"
+    button_clicked = st.button(button_label, key="exam_toggle")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    if button_clicked:
+        st.session_state.exam_mode = not st.session_state.exam_mode
+        if st.session_state.exam_mode:
+            st.session_state.awaiting_answer = False
+            st.session_state.awaiting_feedback = False
+            toggle_msg = "Exam mode activated. I will start asking questions."
+        else:
+            st.session_state.awaiting_answer = False
+            st.session_state.awaiting_feedback = False
+            toggle_msg = "Exam mode deactivated. Returning to conversational mode."
+
         st.session_state.messages.append({
             "role": "assistant",
-            "content": q,
+            "content": toggle_msg,
             "time": datetime.utcnow().isoformat(),
         })
-        st.session_state.started = True
-        st.session_state.awaiting_answer = True
         st.rerun()
 
-    # User input
-    user_msg = st.chat_input("Your answer...")
-
-    # Chat loop
     if user_msg:
+        content = user_msg
+        if st.session_state.exam_mode and st.session_state.awaiting_feedback:
+            content = f"(Feedback) {user_msg}"
+
         st.session_state.messages.append({
             "role": "user",
-            "content": user_msg,
-            "time": datetime.utcnow().isoformat(),
-        })
-        st.session_state.just_got_user = user_msg
-        st.rerun()
-
-    if "just_got_user" in st.session_state:
-        answer = st.session_state.just_got_user
-        del st.session_state["just_got_user"]
-
-        reply = MasterModel.evaluate_answer(answer, st.session_state.messages)
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": reply,
+            "content": content,
             "time": datetime.utcnow().isoformat(),
         })
 
-        next_q = MasterModel.choose_question()
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": next_q,
-            "time": datetime.utcnow().isoformat(),
-        })
+        if st.session_state.exam_mode:
+            if st.session_state.awaiting_feedback:
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": "Thanks for the feedback! Here's the next question.",
+                    "time": datetime.utcnow().isoformat(),
+                })
+                st.session_state.awaiting_feedback = False
+                st.session_state.awaiting_answer = False
+            else:
+                reply = MasterModel.evaluate_answer(user_msg)
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": reply,
+                    "time": datetime.utcnow().isoformat(),
+                })
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": "Let me know what you thought of that feedback.",
+                    "time": datetime.utcnow().isoformat(),
+                })
+                st.session_state.awaiting_answer = False
+                st.session_state.awaiting_feedback = True
+        else:
+            reply = MasterModel.normal_answer(user_msg, st.session_state.messages)
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": reply,
+                "time": datetime.utcnow().isoformat(),
+            })
 
-        st.session_state.awaiting_answer = True
         st.rerun()
 
     st.markdown('</div>', unsafe_allow_html=True)
-
-
-
 
 
 
