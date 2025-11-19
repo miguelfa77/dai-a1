@@ -108,8 +108,7 @@ class EvaluatorModel:
             predictions=[answer],
             references=[ref_answer]
         )
-        score = results['rougeL'] * 100
-        score = round(score, 2)
+        score = float(results['rougeL'] * 100)
         
         return score
     
