@@ -51,7 +51,7 @@ class Master:
         evaluation = self.Evaluator.evaluate(question, ref_answer, answer)
         rouge_score = self.Evaluator.get_rouge(ref_answer, answer)
 
-        return str(f'{evaluation} \nRouge-L Score: {rouge_score}')
+        return str(f'{evaluation} \n\nRouge-L Score: {rouge_score}')
 
 
 
@@ -108,7 +108,7 @@ class EvaluatorModel:
             predictions=[answer],
             references=[ref_answer]
         )
-        score = round(results['rougeL'] * 100), 2
+        score = round(results['rougeL'] * 100, 2)
         return score
     
     def evaluate(self, question, ref_answer, answer):
