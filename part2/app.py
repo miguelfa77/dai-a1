@@ -178,7 +178,7 @@ def render_chat():
                 reply = MasterModel.evaluate_answer(user_msg)
                 st.session_state.messages.append({
                     "role": "assistant",
-                    "content": reply,
+                    "content": reply.values(),
                     "time": datetime.utcnow().isoformat(),
                 })
                 st.session_state.messages.append({
