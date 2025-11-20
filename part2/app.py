@@ -6,12 +6,21 @@ import os
 import evaluate
 import models
 
+# API_KEY management: (streamlit cloud or local)
+GEMINI_API_KEY = None
+
+# If streamlit cloud
 try:
-    # If streamlit cloud
-    GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY")
-except:
-    # If local
+    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
+except (KeyError, AttributeError, st.errors.StreamlitAPIException):
+    pass  # Ignore if not found
+
+# If local
+if GEMINI_API_KEY is None:
     GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+
+if GEMINI_API_KEY is None:
+    raise ValueError("GEMINI_API_KEY not found. Set it in st.secrets or as an environment variable.")
 
 @st.cache_resource
 def load_master(GEMINI_API_KEY=None):
