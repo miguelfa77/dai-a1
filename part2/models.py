@@ -7,7 +7,6 @@ import evaluate
 import dotenv
 dotenv.load_dotenv()
 
-
 class Master:
     def __init__(self):
         """ Contains info and orchestrates Evaluator and Conversational models"""
@@ -85,6 +84,12 @@ class EvaluatorModel:
         # Rules
         prompt = f"""
                 You are an ML Examiner.
+
+                Current evaluation context:
+                Question: {question}
+                Reference answer: {ref_answer}
+                Student message: {answer}
+
                 RULES:
                 → Give structured evaluation of the student's answer for correctness, completeness, and precision (using the reference answer)
                 → Explain what is missing or incorrect.
@@ -93,11 +98,6 @@ class EvaluatorModel:
                     Score: <number>
                     
                     Feedback: <Structured Explanation>
-                
-                Current evaluation context:
-                Question: {question}
-                Reference answer: {ref_answer}
-                Student message: {answer}
 
                 Determine whether 'Student message' is answering the question.
                 Then follow the rules above.
@@ -105,14 +105,11 @@ class EvaluatorModel:
         return prompt
 
     def get_rouge(self, ref_answer, answer):
-        rouge = evaluate.load("rouge")
 
-        results = rouge.compute(
-            predictions=[answer],
-            references=[ref_answer]
-        )
-        score = round(results['rougeL'] * 100, 2)
-        return score
+        rouge = evaluate.load("rouge") 
+        results = rouge.compute(predictions=[answer], references=[ref_answer], rouge_type=["rougeL"], use_stemmer=True)
+
+        return float(result["rougeL"])
     
     def evaluate(self, question, ref_answer, answer):
         """Calls the GenAI model and returns the raw text response."""

@@ -2,11 +2,16 @@ import streamlit as st
 import time
 import json
 from datetime import datetime
+import evaluate
 import models
 
 @st.cache_resource
 def load_master():
     return models.Master()
+
+@st.cache_resource
+def load_rouge():
+    return evaluate.load("rouge")
 
 MasterModel = load_master()
 
