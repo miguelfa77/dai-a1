@@ -9,10 +9,6 @@ import models
 def load_master():
     return models.Master()
 
-@st.cache_resource
-def load_rouge():
-    return evaluate.load("rouge")
-
 MasterModel = load_master()
 
 st.markdown("""
