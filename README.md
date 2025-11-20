@@ -62,7 +62,6 @@ Part 2 delivers an ML tutoring experience that blends a friendly assistant with 
 ### Setup
 **Option 1** 
 App available at [dai-a1.streamlit.app](dai-a1.streamlit.app)
-DISCLAIMER: Experiencing some issues with API KEY management. May get an error when running the app.
 **Option 2**
 1. Install required dependencies:
    ```bash
