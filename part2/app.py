@@ -13,7 +13,7 @@ GEMINI_API_KEY = None
 try:
     GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
 except (KeyError, AttributeError, st.errors.StreamlitAPIException):
-    pass  # Ignore if not found
+    pass
 
 # If local
 if GEMINI_API_KEY is None:
