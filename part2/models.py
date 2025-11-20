@@ -48,12 +48,9 @@ class Master:
         ref_answer = self.df.loc[self.current_index, "answer"]
 
         evaluation = self.Evaluator.evaluate(question, ref_answer, answer)
-        rouge_score = self.Evaluator.get_rouge(ref_answer, answer)
+        #rouge_score = self.Evaluator.get_rouge(ref_answer, answer)  Fix func TODO
 
-        return {
-                    "llm_evaluation": str(evaluation),
-                    "rouge_score": rouge_score
-                }
+        return evaluation
 
 
 
@@ -104,12 +101,15 @@ class EvaluatorModel:
             """
         return prompt
 
+    """
+    Fix TODO
     def get_rouge(self, ref_answer, answer):
 
         rouge = evaluate.load("rouge") 
         result = rouge.compute(predictions=[answer], references=[ref_answer], rouge_type=['rougeL'], use_stemmer=True)
 
         return float(result["rougeL"] * 100)
+    """
     
     def evaluate(self, question, ref_answer, answer):
         """Calls the GenAI model and returns the raw text response."""

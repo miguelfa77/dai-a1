@@ -49,7 +49,7 @@ Part 2 delivers an ML tutoring experience that blends a friendly assistant with 
 - Main Evaluator: `EvaluatorModel` calls **Gemini 2.5 Flash Lite** through `google-genai` to compare student answers with reference answers from `Q&A_db_practice.json`, outputting a score plus structured comments. This model is not small and is able to score/evaluate with depth.
 - `ConversationalModel` uses the same Gemini endpoint but with a lightweight prompt optimized for free-form tutoring conversations.  
 - State management relies on Streamlit session keys (`messages`, `exam_mode`, `awaiting_answer`, `awaiting_feedback`) to guarantee the deterministic four-step loop and to keep UI artifacts (buttons, reruns) synchronized.
-- Alternative Evaluator: Used Rouge-L as it rewards correct ordering, conceptual similarity and structure. Thereby making it the best metric for evaluating correctness in short ML answers. Its important to keep in mind that ROUGE works well as a secondary metric, but has many limitations. It measures textual overlap, not meaning. This is why we chose to use the `EvaluatorModel` as the primary evaluator.
+- Alternative Evaluator: Used Rouge-L as it rewards correct ordering, conceptual similarity and structure. Thereby making it the best metric for evaluating correctness in short ML answers. Its important to keep in mind that ROUGE works well as a secondary metric, but has many limitations. It measures textual overlap, not meaning. This is why we chose to use the `EvaluatorModel` as the primary evaluator. IMPORTANT: The function get_rouge() in `part2/models.py`-`EvaluatorModel` is returning errors so ROUGE has been cut from the streamlit implementation. Fix necessary.
 
 
 
@@ -60,6 +60,9 @@ Part 2 delivers an ML tutoring experience that blends a friendly assistant with 
 - `part2/model_test.ipynb`: Notebook for iterating on prompt templates and sanity-checking API responses.
 
 ### Setup
+**Option 1** 
+App available at [dai-a1.streamlit.app](dai-a1.streamlit.app)
+**Option 2**
 1. Install required dependencies:
    ```bash
    pip install -r requirements.txt
