@@ -51,7 +51,7 @@ class Master:
         rouge_score = self.Evaluator.get_rouge(ref_answer, answer)
 
         return {
-                    "llm_evaluation": evaluation,
+                    "llm_evaluation": str(evaluation),
                     "rouge_score": rouge_score
                 }
 
