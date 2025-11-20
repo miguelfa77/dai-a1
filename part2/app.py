@@ -178,7 +178,12 @@ def render_chat():
                 reply = MasterModel.evaluate_answer(user_msg)
                 st.session_state.messages.append({
                     "role": "assistant",
-                    "content": reply.values(),
+                    "content": (
+                    f"### 🔍 LLM Evaluation\n"
+                    f"{reply['llm_evaluation']}\n\n"
+                    f"### 📏 ROUGE Similarity Score\n"
+                    f"**{reply['rouge_score']} / 100**"
+                         ),
                     "time": datetime.utcnow().isoformat(),
                 })
                 st.session_state.messages.append({
