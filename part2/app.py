@@ -2,10 +2,16 @@ import streamlit as st
 import time
 import json
 from datetime import datetime
+import os
 import evaluate
 import models
 
-GEMINI_API_KEY = st.secrets('GEMINI_API_KEY')
+try:
+    # If streamlit cloud
+    GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY")
+except:
+    # If local
+    GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 @st.cache_resource
 def load_master(GEMINI_API_KEY=None):

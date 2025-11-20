@@ -61,11 +61,7 @@ class EvaluatorModel:
 
     def __init__(self, api_key=None):
         self.LLM = 'gemini-2.5-flash-lite'
-
-        if api_key != None:
-            self.API_KEY = api_key
-        else:
-            self.API_KEY = os.environ.get("GEMINI_API_KEY")
+        self.API_KEY = api_key
 
         # load API client
         self.client = self.get_client()
@@ -95,8 +91,7 @@ class EvaluatorModel:
                 RULES:
                 → Give structured evaluation of the student's answer for correctness, completeness, and precision (using the reference answer)
                 → Explain what is missing or incorrect.
-                → Give a score from 0 to 100 using this exact format:
-
+                → Give a score from 0 to 100 using the following format:
                     Score: <number>
                     
                     Feedback: <Structured Explanation>
@@ -136,11 +131,7 @@ class ConversationalModel:
 
     def __init__(self, api_key=None):
         self.LLM = 'gemini-2.5-flash-lite'
-        
-        if api_key != None:
-            self.API_KEY = api_key
-        else:
-            self.API_KEY = os.environ.get("GEMINI_API_KEY")
+        self.API_KEY = api_key
 
         # load API client
         self.client = self.get_client()
