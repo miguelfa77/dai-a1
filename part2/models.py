@@ -8,15 +8,17 @@ import dotenv
 dotenv.load_dotenv()
 
 class Master:
-    def __init__(self):
+    def __init__(self, api_key=None):
         """ Contains info and orchestrates Evaluator and Conversational models"""
+        # models api_key
+        self.API_KEY = api_key
 
         self.DF_PATH = "part2/Q&A_db_practice.json"
         # load df
         self.df = self.load_df(self.DF_PATH)
         
-        self.Evaluator = EvaluatorModel()
-        self.Conversational = ConversationalModel()
+        self.Evaluator = EvaluatorModel(self.API_KEY)
+        self.Conversational = ConversationalModel(self.API_KEY)
         self.current_index = None
 
     def load_df(self, df_path):
@@ -57,9 +59,13 @@ class Master:
 class EvaluatorModel:
     """ Model for evaluating user answers """
 
-    def __init__(self):
+    def __init__(self, api_key=None):
         self.LLM = 'gemini-2.5-flash-lite'
-        self.API_KEY = os.environ.get("GEMINI_API_KEY")
+
+        if api_key != None:
+            self.API_KEY = api_key
+        else:
+            self.API_KEY = os.environ.get("GEMINI_API_KEY")
 
         # load API client
         self.client = self.get_client()
@@ -128,9 +134,13 @@ class EvaluatorModel:
 class ConversationalModel:
     """ Responds like a conversational assistant """
 
-    def __init__(self):
+    def __init__(self, api_key=None):
         self.LLM = 'gemini-2.5-flash-lite'
-        self.API_KEY = os.environ.get("GEMINI_API_KEY")
+        
+        if api_key != None:
+            self.API_KEY = api_key
+        else:
+            self.API_KEY = os.environ.get("GEMINI_API_KEY")
 
         # load API client
         self.client = self.get_client()

@@ -5,11 +5,13 @@ from datetime import datetime
 import evaluate
 import models
 
-@st.cache_resource
-def load_master():
-    return models.Master()
+GEMINI_API_KEY = st.secrets('GEMINI_API_KEY')
 
-MasterModel = load_master()
+@st.cache_resource
+def load_master(GEMINI_API_KEY=None):
+    return models.Master(GEMINI_API_KEY)
+
+MasterModel = load_master(GEMINI_API_KEY)
 
 st.markdown("""
 <style>
