@@ -107,7 +107,7 @@ class EvaluatorModel:
     def get_rouge(self, ref_answer, answer):
 
         rouge = evaluate.load("rouge") 
-        result = rouge.compute(predictions=[answer], references=[ref_answer], use_stemmer=True)
+        result = rouge.compute(predictions=[answer], references=[ref_answer])
 
         return float(result["rougeL"])
     
